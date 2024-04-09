@@ -1,0 +1,11 @@
+__pycache__
+te.py
+authors.json
+quotes.json
+csstyles
+mystaticfiles
+aarch
+.env
+postgres-data
+mystaticfiles
+database.db
