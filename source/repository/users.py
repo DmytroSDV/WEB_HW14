@@ -133,7 +133,6 @@ async def create_user(body: UserSchema, db: AsyncSession, consumer: Consumer):
     await db.refresh(user)
     return user
 
-
 async def update_user(user_id: int, body: UserSchema, db: AsyncSession, consumer: Consumer):
     """
     The update_user function updates a user in the database.
@@ -163,7 +162,6 @@ async def update_user(user_id: int, body: UserSchema, db: AsyncSession, consumer
         await db.commit()
         await db.refresh(user)
     return  user
-
 
 async def delete_user(user_id: int, db: AsyncSession, consumer: Consumer):
     """
