@@ -110,9 +110,12 @@ async def get_users_birth(limit: int, db: AsyncSession, consumer: Consumer):
     current_date = datetime.now().date()
     end_date = current_date + timedelta(days=limit)
     
-    search = select(User).filter_by(User.birth_date >= current_date, 
-                                    User.birth_date <= end_date,
-                                    consumer=consumer)
+    search = (
+        select(User)
+        .filter(User.birth_date >= current_date)
+        .filter(User.birth_date <= end_date)
+        .filter(User.consumer == consumer)
+    )
     result = await db.execute(search)
 
     return result.scalars().all()
