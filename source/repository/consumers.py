@@ -72,6 +72,7 @@ async def confirmed_email(email: str, db: AsyncSession) -> None:
     user = await get_user_by_email(email, db)
     user.confirmed = True
     await db.commit()
+    return user
 
 async def update_avatar_url(email: str, url: str | None, db: AsyncSession) -> Consumer:
     """
@@ -103,3 +104,4 @@ async def update_password(email: str, password:str, db: AsyncSession) -> None:
     user = await get_user_by_email(email, db)
     user.password = password
     await db.commit()
+    return user

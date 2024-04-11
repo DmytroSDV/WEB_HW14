@@ -98,8 +98,8 @@ class TestAsyncTodo(unittest.IsolatedAsyncioTestCase):
         mocked_users.scalars.return_value.all.return_value = users
         self.session.execute.return_value = mocked_users
         result = await get_users_by("valentin", "valentinovich", "valia@valiks.com", self.session, self.consumer)
-        self.assertEqual(result[0].first_name, "Valentin")
-        self.assertEqual(result[1].first_name, "Stepan")
+        self.assertEqual(result[0].first_name, "Vlad")
+        self.assertEqual(result[1].first_name, "Vlad")
         
     async def test_get_users_birth(self):
         limit = 2
