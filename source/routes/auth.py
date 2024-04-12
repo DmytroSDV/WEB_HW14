@@ -34,7 +34,10 @@ async def signup(body: UserSchema, bt: BackgroundTasks, request: Request, db: As
     body.password = auth_service.get_password_hash(body.password)
     new_user = await repository_consumer.create_user(body, db)
     bt.add_task(send_email, new_user.email, new_user.username, str(request.base_url))
-    return new_user
+    return {
+        "user": new_user,
+        "detail": "User successfully created. Check your email for confirmation.",
+    }
 
 @router.post("/login",  response_model=TokenSchema)
 async def login(body: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
