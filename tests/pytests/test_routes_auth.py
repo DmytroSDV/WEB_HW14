@@ -1,10 +1,10 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 
 from source.models.models import Consumer
 
 
 def test_create_user(client, user, monkeypatch):
-    mock_send_email = MagicMock()
+    mock_send_email = AsyncMock()
     monkeypatch.setattr("source.routes.auth.send_email", mock_send_email)
     response = client.post(
         "/api/auth/signup",

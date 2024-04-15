@@ -10,7 +10,7 @@ from source.services.auth import auth_service
 from source.services.email import send_email, send_password_email
 
 from fastapi_limiter.depends import RateLimiter
-
+from source.config import messages
 router = APIRouter(prefix='/auth', tags=['auth'])
 get_refresh_token = HTTPBearer()
 
@@ -30,15 +30,16 @@ async def signup(body: UserSchema, bt: BackgroundTasks, request: Request, db: As
     """
     exist_user = await repository_consumer.get_user_by_email(body.email, db)
     if exist_user:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Account already exists")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=messages.ACCOUNT_EXIST)
     body.password = auth_service.get_password_hash(body.password)
     new_user = await repository_consumer.create_user(body, db)
     bt.add_task(send_email, new_user.email, new_user.username, str(request.base_url))
-    return {
-        "user": new_user,
-        "detail": "User successfully created. Check your email for confirmation.",
-    }
-
+    # return {
+    #     "user": new_user,
+    #     "detail": "User successfully created. Check your email for confirmation.",
+    # }
+    return new_user
+    
 @router.post("/login",  response_model=TokenSchema)
 async def login(body: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
     """

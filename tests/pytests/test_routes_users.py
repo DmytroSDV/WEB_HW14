@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock
 
 import pytest
 from datetime import datetime, timedelta
@@ -9,7 +9,7 @@ from source.services.auth import auth_service
 
 @pytest.fixture()
 def token(client, user, session, monkeypatch):
-    mock_send_email = MagicMock()
+    mock_send_email = AsyncMock()
     monkeypatch.setattr("source.routes.auth.send_email", mock_send_email)
     client.post("/api/auth/signup", json=user)
     current_user: User = session.query(User).filter(User.email == user.get('email')).first()

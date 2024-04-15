@@ -1,50 +1,61 @@
 import pytest
+import pytest_asyncio
+import asyncio
+
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
 from main import app
-from source.models.models import Base
+from source.models.models import Base, Consumer
 from source.database.db import get_db
+from source.services.auth import auth_service
 
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test_ing.db"
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./test_ing.db"
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+engine = create_async_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+TestingSessionLocal = async_sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
+
+test_user = {"username": "Vlad", "email": "Vladislavovich@vladik.com", "password": "vlados"}
+
+@pytest.fixture(scope="module", autouse=True)
+def init_models_wrap():
+    async def init_models():
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+            await conn.run_sync(Base.metadata.create_all)
+        async with TestingSessionLocal() as session:
+            hash_password = auth_service.get_password_hash(test_user["password"])
+            current_user = Consumer(username=test_user["username"], email=test_user["email"], password=hash_password,
+                                confirmed=True, role="admin")
+            session.add(current_user)
+            await session.commit()
+            
+    asyncio.run(init_models())
 
 
 @pytest.fixture(scope="module")
-def session():
-    # Create the database
+def client():
 
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
-
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-@pytest.fixture(scope="module")
-def client(session):
-    # Dependency override
-
-    def override_get_db():
+    async def override_get_db():
+        session = TestingSessionLocal()
         try:
             yield session
+        except Exception as err:
+            print(err)
+            await session.rollback()
         finally:
-            session.close()
+            await session.close()
 
     app.dependency_overrides[get_db] = override_get_db
 
     yield TestClient(app)
 
 
-@pytest.fixture(scope="module")
-def user():
-    return {"username": "Vlad", "email": "Vladislavovich@vladik.com", "password": "vlados"}
+@pytest_asyncio.fixture()
+async def get_token():
+    token = await auth_service.create_access_token(data={"sub": test_user["email"]})
+    return token
