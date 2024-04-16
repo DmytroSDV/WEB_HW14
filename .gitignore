@@ -10,3 +10,4 @@ postgres-data
 mystaticfiles
 database.db
 test_ing.db
+htmlcov
